@@ -26,12 +26,12 @@ class VolunteerController extends Controller
 {
     /**
      * Function responsible of processing get all volunteers requests.
-     *
+     * 
      * @param object $request Contains all the data needed for extracting all the volunteers list.
-     *
+     * 
      * @return object 200 and the list of volunteers if successful
      *                500 if an error occurs
-     *
+     *  
      * @SWG\Get(
      *   tags={"Volunteers"},
      *   path="/api/volunteers",
@@ -47,11 +47,6 @@ class VolunteerController extends Controller
         $params = $request->query();
         $volunteers = Volunteer::query();
 
-        /** Restrict 'ngo' user to view only he volunteers he/she added. */
-        if(isRole('ngo')) {
-            $volunteers->where('organisation._id', '=', getAffiliationId());
-        }
-
         /** Filter, sort and paginate the list of volunteers. */
         applyFilters($volunteers, $params, ['0' => ['county._id', 'ilike'], '1' => ['courses', 'elemmatch', "course_name._id", '$eq'], '2' => ['organisation._id', '='], '3' => ['name', 'ilike'], ]);
         applySort($volunteers, $params, array('1' => 'name', '2' => 'county', '3' => 'organisation.name'));
@@ -63,12 +58,12 @@ class VolunteerController extends Controller
 
      /**
      * Function responsible of processing get volunteer requests.
-     *
+     * 
      * @param string $id The ID of the volunteer to be extracted.
-     *
+     * 
      * @return object 200 and the volunteer details if successful
      *                500 if an error occurs
-     *
+     *  
      * @SWG\Get(
      *   tags={"Volunteers"},
      *   path="/api/volunteers/{id}",
@@ -87,14 +82,14 @@ class VolunteerController extends Controller
 
     /**
      * Function responsible of processing put volunteer requests.
-     *
+     * 
      * @param object $request Contains all the data needed for saving a new volunteer.
-     *
+     * 
      * @return object 201 and the volunteer details if successful
      *                400 if validation fails
      *                404 if organization not found fails
      *                500 if an error occurs
-     *
+     *  
      * @SWG\Post(
      *   tags={"Volunteers"},
      *   path="/api/volunteers",
@@ -236,7 +231,7 @@ class VolunteerController extends Controller
         $organisation_id = $request->organisation_id;
         $organisation = \DB::connection('organisations')->collection('organisations')->where('_id', '=', $organisation_id)->get(['_id', 'name', 'website'])->first();
         if (!$organisation) {
-            return response()->json('Organizatia nu exista', 404);
+            return response()->json('Organizatia nu exista', 404); 
         }
 
         $data['organisation'] = $organisation;
@@ -245,7 +240,7 @@ class VolunteerController extends Controller
         if ($request->has('county')) {
             $data['county'] = getCityOrCounty($request->county,County::query());
         }
-        if ($request->has('city')) {
+        if ($request->has('city')) {            
             $data['city'] = getCityOrCounty($request->city,City::query());
         }
 
@@ -297,27 +292,27 @@ class VolunteerController extends Controller
             notifyUpdate('dsu', new VolunteerAdd(['name' => $volunteer->organisation['name']]));
         }
 
-        return response()->json($volunteer, 201);
+        return response()->json($volunteer, 201); 
     }
 
 
     /**
      * Function responsible of processing a volunteer update requests.
-     *
+     * 
      * @param object $request Contains all the data needed for updating a volunteer.
      * @param string $id The ID of the volunteer to be updated.
-     *
+     * 
      * @return object 201 and the JSON encoded volunteer details if successful
      *                404 if email or CNP/SSN are invalid fails
      *                500 if an error occurs
-     *
+     *  
      * @SWG\put(
      *   tags={"Volunteers"},
      *   path="/api/volunteers/{id}",
      *   summary="Update volunteer",
      *   operationId="update",
      *   @SWG\Response(response=200, description="successful operation"),
-     *   @SWG\Response(response=404, description="not valid"),
+     *   @SWG\Response(response=404, description="not valid"),     
      *   @SWG\Response(response=406, description="not acceptable"),
      *   @SWG\Response(response=500, description="internal server error")
      * )
@@ -345,7 +340,7 @@ class VolunteerController extends Controller
         if ($data['county'] && !is_null($data['county'])) {
             $data['county'] = getCityOrCounty($request['county'],County::query());
         }
-        if ($data['city'] && !is_null($data['city'])) {
+        if ($data['city'] && !is_null($data['city'])) {            
             $data['city'] = getCityOrCounty($request['city'],City::query());
         }
         /** Extract and set 'organisation_id'. */
@@ -409,12 +404,12 @@ class VolunteerController extends Controller
 
     /**
      * Function responsible of processing delete volunteers requests.
-     *
+     * 
      * @param string $id The ID of the volunteer to be deleted.
-     *
+     * 
      * @return object 200 if deletion is successful
      *                500 if an error occurs
-     *
+     *  
      * @SWG\Delete(
      *   tags={"Volunteers"},
      *   path="/api/volunteers/{id}",
@@ -448,12 +443,12 @@ class VolunteerController extends Controller
 
     /**
      * Function responsible of processing import volunteers requests.
-     *
+     * 
      * @param object $request Contains all the data needed for importing a list of volunteers.
-     *
+     * 
      * @return object 200 if import is successful
      *                500 if an error occurs
-     *
+     *  
      * @SWG\Post(
      *   tags={"Volunteers"},
      *   path="/api/volunteers/import",
@@ -477,7 +472,7 @@ class VolunteerController extends Controller
      *   @SWG\Response(response=406, description="not acceptable"),
      *   @SWG\Response(response=500, description="internal server error")
      * )
-     *
+     * 
      */
     public function importVolunteers(Request $request) {
         $file = $request->file('file');
@@ -498,14 +493,10 @@ class VolunteerController extends Controller
             $countys = County::all(['_id', "slug", "name"]);
             $county_map = array_column($countys->toArray(), null, 'slug');
             $imported = 0;
-            $organisation = null;
-
             \Auth::check() ? $authenticatedUser = \Auth::user() : '';
-
-            if (isset($authenticatedUser) && $authenticatedUser && $authenticatedUser['role'] == 2) {
-                /** Extract the authenticated user organisation data. */
+            $organisation = null;
+            if(isset($authenticatedUser) && $authenticatedUser && $authenticatedUser['role'] == 2) {
                 $organisationData = Organisation::find($authenticatedUser['organisation']['_id']);
-
                 $organisation = (object) [
                     '_id' => $organisationData['_id'],
                     '_rev' => $organisationData['_rev'],
@@ -514,10 +505,8 @@ class VolunteerController extends Controller
                     'type' => $organisationData['type']
                 ];
             } else {
-                if ($request->organisation_id) {
-                    /** Extract the request organisation data. */
+                if($request->organisation_id){
                     $organisationData = Organisation::find($request->organisation_id);
-
                     $organisation = (object) [
                         '_id' => $organisationData['_id'],
                         '_rev' => $organisationData['_rev'],
@@ -528,7 +517,6 @@ class VolunteerController extends Controller
                 }
             }
 
-            /** Check NO organization has been found. */
             if(!$organisation){
                 return response(array(
                     "has_errors" => true,
@@ -541,61 +529,36 @@ class VolunteerController extends Controller
             }
 
             while (($setUpData = fgetcsv($file, 1000, ",")) !== FALSE) {
-                /** Skip the first row. */
-                if (0 == $i) {
-                   $i++;
-                   continue;
-                }
-
-                /** Reset the errors array. */
                 $error = array();
-                /** Get the row length. */
                 $num = count($setUpData);
-
-                /** Check if columns 1 to 5 are NOT ser, NOT null or empty. */
-                $error = verifyErrors($error, $setUpData[0], 'Nume');
-                $error = verifyErrors($error, $setUpData[1], 'CNP');
-                $error = verifyErrors($error, $setUpData[2], 'Email');
-                $error = verifyErrors($error, $setUpData[3], 'Telefon');
-                $error = verifyErrors($error, $setUpData[4], 'Judet');
-                $error = verifyErrors($error, $setUpData[5], 'Localitate');
-
-                /** Define the array for the courses. */
-                $coursesData = array();
-
-                /** Check if any courses are specified. */
-                if (isset($setUpData[8]) && $setUpData[8]) {
-                    /** Extract the list of specified courses and separate it by the ';' character. */
+                if($i == 0){
+                   $i++;
+                   continue; 
+                }
+                $error = verifyErrors($error, $setUpData[0],'Nume');
+                $error = verifyErrors($error, $setUpData[1],'CNP');
+                $error = verifyErrors($error, $setUpData[2],'Email');
+                $error = verifyErrors($error, $setUpData[3],'Telefon');
+                $error = verifyErrors($error, $setUpData[4],'Judet');
+                $error = verifyErrors($error, $setUpData[5],'Localitate');
+                if(isset($setUpData[8]) && $setUpData[8]) {
                     $courses = explode(';', $setUpData[8]);
-
-                    /** Chech if the courses have been added correctlly. */
                     $error = verifyErrors($error, $courses, 'Acreditarile au fost separate gresit.');
+                    $coursesData = array();
 
-                    /** Check if any courses have been specified. */
-                    if (isset($courses) && $courses) {
-                        /** Parse all specified courses. */
+                    if(isset($courses) && $courses) {
                         foreach ($courses as $course) {
-                            /** Extract the course details. */
                             $each = explode(':', $course);
-
-                            /** Check course details have been added correctlly. */
                             $error = verifyErrors($error, $each, 'Datele acreditarii separate gresit.');
-
-                            /** Save course details in <KEY>:<VALUE> pair. */
                             $course_values = [
                                 'course_name_id' => removeDiacritics($each[0]),
                                 'obtained' => $each[1],
                                 'accredited_by' => $each[2]
                             ];
 
-                            /** Check the course name is specified. */
-                            if (isset($course_values['course_name_id']) && !is_null($course_values['course_name_id'])) {
-                                /** Search and extract the course from the DB. */
+                            if(isset($course_values['course_name_id']) && !is_null($course_values['course_name_id'])) {
                                 $course_name = CourseName::query()->where('slug', '=', $course_values['course_name_id'])->first();
-
-                                /** Check if the course was found in the DB. */
-                                if ($course_name) {
-                                    /** Create new DB entry. */
+                                if($course_name){
                                     $newCourse = (object) [
                                         'course_name' =>(object) [
                                             '_id' => $course_name['_id'],
@@ -604,30 +567,22 @@ class VolunteerController extends Controller
                                         ],
                                         'obtained' => Carbon::parse($course_values['obtained'])->format('Y-m-d H:i:s')
                                     ];
-
-                                    /** Search and extract the course accreditor from the DB. */
                                     $courseAccreditor = CourseAccreditor::query()->where('name', '=', $course_values['accredited_by'])->first();
 
-                                    /** Check if the course accreditor was NOT found in the DB. */
-                                    if (!$courseAccreditor) {
-                                        /** Create a new course accreditor. */
+                                    if(!$courseAccreditor) {
                                         $courseAccreditor = CourseAccreditor::create([
                                             'name' => $course_values['accredited_by'],
                                             'courses' => [$course_name['_id']]
                                         ]);
                                     } else {
-                                        /** Check that a link between the course accreditor and the course does NOT exists. */
-                                        if (is_array($courseAccreditor->courses) && !in_array($course_name['_id'], $courseAccreditor->courses)) {
-                                            /** Create link between the course accreditor and the course. */
+                                        if(is_array($courseAccreditor->courses) && !in_array($course_name['_id'], $courseAccreditor->courses)){
                                             $courseAccreditor->courses = array_merge( $courseAccreditor->courses, [$course_name['_id']]);
                                             $courseAccreditor->save();
                                         }
                                     }
 
-                                    /** Add the link between the course accreditor and the course to the course. */
                                     $newCourse->accredited = (object) ['_id' => $courseAccreditor['_id'],'name' => $courseAccreditor['name']];
 
-                                    /** Add the new course to the list of courses. */
                                     $coursesData[] = (object) $newCourse;
                                 } else {
                                     $error = addError($error, $course_name, 'Numele acreditarii nu se afla in baza de date.');
@@ -639,22 +594,15 @@ class VolunteerController extends Controller
                     }
                 }
 
-                /** Remove county diacritics. */
                 $countySlug = removeDiacritics($setUpData[4]);
-                /** Remove city diacritics. */
                 $citySlug = removeDiacritics($setUpData[5]);
-
-                /** Check the county is valid (exists in DB). */
                 if (isset($county_map[$countySlug]) && $county_map[$countySlug]) {
-                    /** Create get city query. */
                     $getCity = \DB::connection('statics')->getCouchDBClient()
                                                          ->createViewQuery('cities', 'slug')
-                                                         ->setKey(array($county_map[$countySlug]['_id'], $citySlug))
+                                                         ->setKey(array($county_map[$countySlug]['_id'],$citySlug))
                                                          ->execute();
 
-                    /** Check the city exists inside the county. */
                     if ($getCity->offsetExists(0)) {
-                        /** Extract the city details. */
                         $city = array(
                             "_id" => $getCity->offsetGet(0)['id'],
                             "name" =>  $getCity->offsetGet(0)['value']
@@ -665,14 +613,10 @@ class VolunteerController extends Controller
                 } else {
                     $error = addError($error, $countySlug, 'Judetul nu exista');
                 }
-
-                /** Extract the number of volunteers that have the same email and CNP. */
                 $email = Volunteer::query()->where('email', '=', $setUpData[2])->get()->count();
                 $cnp = Volunteer::query()->where('ssn', '=', $setUpData[1])->get()->count();
 
-                /** Check that NO errors occured and NO volunteer with the same email or CNP has been found. */
-                if ((0 == count($error)) && (0 == $email) && (0 == $cnp)) {
-                    /** Construct the volunteer data. */
+                if (count($error) == 0 && $email == 0 && $cnp == 0) {
                     $insertData = array(
                         "name" => $setUpData[0],
                         "ssn" => $setUpData[1],
@@ -690,10 +634,8 @@ class VolunteerController extends Controller
                         "allocation" => ""
                     );
 
-                    /** Save the new volunteer to the DB. */
                     Volunteer::create($insertData);
 
-                    /** Increment the imported number of volunteers. */
                     $imported++;
                 } else {
                     $error = addError($error, $setUpData[2], 'Email-ul exista deja sau cnp-ul exista deja');
@@ -702,37 +644,30 @@ class VolunteerController extends Controller
                         'error' => $error
                     ];
                 }
-
-                /** Move to the next volunteer. */
                 $i++;
             }
-            /** Close the CSV. */
             fclose($file);
-
-            /** Count the total errors number. */
             $total_errors = count($errors);
 
-            /** Compose the response message. */
             $message = "";
 
-            if ((0 < count($errors)) && (0 == $imported)) {
+            if (count($errors) > 0 && $imported == 0) {
                 $message = "Importul nu a putut fi efectuat";
             }
 
-            if ((0 < count($errors)) && (0 < $imported)) {
+            if (count($errors) > 0 && $imported > 0) {
                 $message = "Import partial finalizat";
             }
 
-            if ((0 == count($errors)) && (($i - 1) == $imported)) {
+            if (count($errors) == 0 && $imported == $i-1) {
                 $message = "Import finalizat cu success";
             }
 
-            /** Send the response. */
             return response(array(
-                "has_errors" => ($total_errors != 0),
+                "has_errors" => $total_errors != 0,
                 "total_errors" => $total_errors,
                 "rows_imported" => $imported,
-                "rows_discovered" => ($i - 1),
+                "rows_discovered" => $i-1,
                 "errors" => $errors,
                 "message" => $message
             ));
@@ -742,9 +677,9 @@ class VolunteerController extends Controller
 
     /**
      * Function responsible of extracting the list of allocations of a volunteer.
-     *
+     * 
      * @param string $id The ID of the volunteer for which to extract the allocations list.
-     *
+     * 
      * @return object 200 if extraction is successful
      *                500 if an error occurs
      */
@@ -757,7 +692,7 @@ class VolunteerController extends Controller
 
     /**
      * Function responsible of returning the volunteers import template file.
-     *
+     * 
      * @return object 200 and the template-voluntari.csv file if successful
      *                500 if an error occurs
      */
@@ -765,3 +700,4 @@ class VolunteerController extends Controller
         return response()->download(storage_path("app/public/template-voluntari.csv"));
     }
 }
+ 

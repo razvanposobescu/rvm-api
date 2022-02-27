@@ -28,6 +28,6 @@ class VolunteerUpdate extends Mailable
      */
     public function build()
     {
-        return $this->from(config('mail.username'))->subject('Actualizare voluntari')->view('mails.volunteer_update')->with('data', $this->data);
+        return $this->from(env('EMAIL_ADDRESS'))->subject('Actualizare voluntari')->view('mails.volunteer_update')->with('data', $this->data);
     }
 }
