@@ -28,6 +28,6 @@ class VolunteerAdd extends Mailable
      */
     public function build()
     {
-        return $this->from(config('mail.username'))->subject('Adăugare voluntari')->view('mails.volunteer_add')->with('data', $this->data);
+        return $this->from(env('EMAIL_ADDRESS'))->subject('Adăugare voluntari')->view('mails.volunteer_add')->with('data', $this->data);
     }
 }

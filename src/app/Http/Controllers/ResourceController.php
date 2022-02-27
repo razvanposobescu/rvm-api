@@ -72,7 +72,7 @@ class ResourceController extends Controller
     }
 
      /**
-     * Function responsible is processing get resource requests.
+     * Function responsible of processing get resource requests.
      * 
      * @param string $id The ID of the resource to be extracted.
      * 
@@ -280,9 +280,6 @@ class ResourceController extends Controller
                                                         ->get(['_id', 'name', 'slug', 'website'])
                                                         ->first();
         $data['organisation'] = $organisation;
-
-         //  if we have tags add them
-         $data['tags'] = $request->has('tags') ?? [];
 
         /** Add the 'added by' to the resource. */
         \Auth::check() ? $data['added_by'] = \Auth::user()->_id : '';
