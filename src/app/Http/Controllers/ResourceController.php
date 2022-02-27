@@ -19,12 +19,12 @@ class ResourceController extends Controller
 {
     /**
      * Function responsible of processing get all resources requests.
-     *
+     * 
      * @param object $request Contains all the data needed for extracting all the resources list.
-     *
+     * 
      * @return object 200 and the list of resources if successful
      *                500 if an error occurs
-     *
+     *  
      * @SWG\Get(
      *   tags={"Resources"},
      *   path="/api/resources",
@@ -40,7 +40,6 @@ class ResourceController extends Controller
         $params = $request->query();
         $resources = Resource::query();
 
-        /** Restrict 'ngo' user to view only he resources he/she added. */
         if(isRole('ngo')) {
             $resources->where('organisation._id', '=', getAffiliationId());
         }
@@ -69,18 +68,18 @@ class ResourceController extends Controller
 
         $resources['data'] = array_values($resources['data']->toArray());
 
-        return response()->json($resources, 200);
+        return response()->json($resources, 200); 
     }
 
      /**
-     * Function responsible of processing get resource requests.
-     *
+     * Function responsible is processing get resource requests.
+     * 
      * @param string $id The ID of the resource to be extracted.
-     *
+     * 
      * @return object 200 and the resource details if successful
      *                404 if no resource is found
      *                500 if an error occurs
-     *
+     *  
      * @SWG\Get(
      *   tags={"Resources"},
      *   path="/api/resources/{id}",
@@ -106,13 +105,13 @@ class ResourceController extends Controller
 
      /**
      * Function responsible of processing get all resources with a slug requests.
-     *
+     * 
      * @param object $request Contains all the data needed for extracting all the resources with a slug list.
-     *
+     * 
      * @return object 200 and the list of resources if successful
      *                404 if no resource is found
      *                500 if an error occurs
-     *
+     *  
      * @SWG\Get(
      *   tags={"Resources"},
      *   path="/api/resources/by_slug/{slug}",
@@ -150,13 +149,13 @@ class ResourceController extends Controller
 
     /**
      * Function responsible of processing put resources requests.
-     *
+     * 
      * @param object $request Contains all the data needed for saving a resource.
-     *
+     * 
      * @return object 200 and the resource details if successful
      *                400 if validation fails
      *                500 if an error occurs
-     *
+     *  
      * @SWG\Post(
      *   tags={"Resources"},
      *   path="/api/resources",
@@ -270,7 +269,7 @@ class ResourceController extends Controller
         if ($request->has('county')) {
             $data['county'] = getCityOrCounty($request->county,County::query());
         }
-        if ($request->has('city')) {
+        if ($request->has('city')) {            
             $data['city'] = getCityOrCounty($request->city,City::query());
         }
 
@@ -282,6 +281,9 @@ class ResourceController extends Controller
                                                         ->first();
         $data['organisation'] = $organisation;
 
+         //  if we have tags add them
+         $data['tags'] = $request->has('tags') ?? [];
+
         /** Add the 'added by' to the resource. */
         \Auth::check() ? $data['added_by'] = \Auth::user()->_id : '';
         $resource = Resource::create($data);
@@ -291,20 +293,20 @@ class ResourceController extends Controller
             notifyUpdate('dsu', new ResourceAdd(['name' => $resource->organisation['name']]));
         }
 
-        return response()->json($resource, 200);
+        return response()->json($resource, 200); 
     }
 
 
     /**
      * Function responsible of processing resource update requests.
-     *
+     * 
      * @param object $request Contains all the data needed for updating a resource.
      * @param string $id The ID of the resource to be updated.
-     *
+     * 
      * @return object 200 and the JSON encoded resource details if successful
      *                404 if email or CNP/SSN are invalid fails
      *                500 if an error occurs
-     *
+     *  
      * @SWG\put(
      *   tags={"Resources"},
      *   path="/api/resources/{id}",
@@ -354,12 +356,12 @@ class ResourceController extends Controller
 
     /**
      * Function responsible of processing delete resource requests.
-     *
+     * 
      * @param string $id The ID of the resource to be deleted.
-     *
+     * 
      * @return object 200 if deletion is successful
      *                500 if an error occurs
-     *
+     *  
      * @SWG\Delete(
      *   tags={"Resources"},
      *   path="/api/resources/{id}",
@@ -430,12 +432,12 @@ class ResourceController extends Controller
 
     /**
      * Function responsible of processing get all resource categories requests.
-     *
+     * 
      * @param object $request Contains all the data needed for geting all resource categories.
-     *
+     * 
      * @return object 200 if extraction is successful
      *                500 if an error occurs
-     *
+     *  
      * @SWG\Get(
      *   tags={"Resources"},
      *   path="/api/resources/categories",
@@ -453,18 +455,18 @@ class ResourceController extends Controller
 
         applyFilters($resources, $params, array('1' => array( 'slug', 'ilike' ),'2' => array( 'parent_id', '=' )));
 
-        return response()->json($resources->get(['_id', 'parent_id', 'name', 'slug']), 200);
+        return response()->json($resources->get(['_id', 'parent_id', 'name', 'slug']), 200); 
     }
 
 
     /**
      * Function responsible of processing import resources requests.
-     *
+     * 
      * @param object $request Contains all the data needed for importing a list of resources.
-     *
+     * 
      * @return object 200 if import is successful
      *                500 if an error occurs
-     *
+     *  
      * @SWG\Post(
      *   tags={"Resources"},
      *   path="/api/resources/import",
@@ -550,7 +552,7 @@ class ResourceController extends Controller
                 $num = count($setUpData);
                 if($i == 0){
                    $i++;
-                   continue;
+                   continue; 
                 }
 
                 if(isset($setUpData[2]) && $setUpData[2]) {
@@ -558,16 +560,16 @@ class ResourceController extends Controller
                     $category = ResourceCategory::query()
                         ->where('slug', '=', removeDiacritics($setUpData[2]))
                         ->first(['_id', 'name', 'slug']);
-
+                        
                     if($category) {
                         $categories[] = $category->toArray();
-
+                    
                         if(isset($setUpData[3]) && $setUpData[3]) {
                             $subcategory = ResourceCategory::query()
                                 ->where('slug', '=', removeDiacritics($setUpData[3]))
                                 ->where('parent_id', '=', $category['_id'])
                                 ->first(['_id', 'name', 'slug']);
-
+        
                             if($subcategory) {
                                 $categories[] = $subcategory->toArray();
                             }else{
@@ -607,7 +609,7 @@ class ResourceController extends Controller
                         "slug" => removeDiacritics($setUpData[0]),
                         "resource_type" => $setUpData[1],
                         "quantity" => $setUpData[4],
-
+                        
                         "county" => array(
                             '_id' => $county_map[$countySlug]['_id'],
                             'name' => $county_map[$countySlug]['name']
@@ -660,7 +662,7 @@ class ResourceController extends Controller
 
     /**
      * Function responsible of returning the resources import template file.
-     *
+     * 
      * @return object 200 and the template-resurse.csv file if successful
      *                500 if an error occurs
      */
